@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Location, Restaurant } from '../types';
 import { spotService } from '../services/spotService';
 import RestaurantCard from './RestaurantCard';
@@ -12,6 +12,8 @@ const MapPage: React.FC = () => {
     const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [recenterTrigger, setRecenterTrigger] = useState<number>(0);
+    const [locationReady, setLocationReady] = useState<boolean>(false);
+    const watchIdRef = useRef<number | null>(null);
 
     const loadRestaurants = useCallback(async () => {
         setLoading(true);
@@ -22,29 +24,52 @@ const MapPage: React.FC = () => {
 
     useEffect(() => {
         if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(
+            // Use watchPosition for continuous updates, but we only care about the first accurate one
+            watchIdRef.current = navigator.geolocation.watchPosition(
                 (position) => {
-                    const { latitude, longitude } = position.coords;
-                    console.log("📍 Got real location:", latitude, longitude);
+                    const { latitude, longitude, accuracy } = position.coords;
+                    console.log("📍 Location update:", latitude, longitude, "accuracy:", accuracy);
+
                     setLocation({ latitude, longitude });
-                    loadRestaurants();
+
+                    // Once we have a reasonably accurate location (< 100m), stop watching
+                    if (accuracy < 100 && !locationReady) {
+                        setLocationReady(true);
+                        if (watchIdRef.current !== null) {
+                            navigator.geolocation.clearWatch(watchIdRef.current);
+                        }
+                    }
+
+                    // Load restaurants on first location
+                    if (!locationReady) {
+                        loadRestaurants();
+                    }
                 },
                 (err) => {
                     console.error("Geolocation error:", err);
+                    // Fallback to GBK area
                     setLocation({ latitude: -6.2088, longitude: 106.8456 });
+                    setLocationReady(true);
                     loadRestaurants();
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
+                    timeout: 15000,
                     maximumAge: 0
                 }
             );
         } else {
             setLocation({ latitude: -6.2088, longitude: 106.8456 });
+            setLocationReady(true);
             loadRestaurants();
         }
-    }, [loadRestaurants]);
+
+        return () => {
+            if (watchIdRef.current !== null) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+            }
+        };
+    }, [loadRestaurants, locationReady]);
 
     const filteredRestaurants = restaurants.filter(r => {
         if (searchQuery) {

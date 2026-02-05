@@ -19,7 +19,9 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<{ [key: string]: any }>({});
-  const userMarkerRef = useRef<any>(null); // NEW: Store user marker ref
+  const userMarkerRef = useRef<any>(null);
+  const lastLocationRef = useRef<{ lat: number; lng: number } | null>(null);
+  const isFirstRenderRef = useRef<boolean>(true);
 
   // User icon style (defined once)
   const userIconHtml = `
@@ -39,6 +41,17 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
       }
     </style>
   `;
+
+  // Calculate distance between two points in meters
+  const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
 
   useEffect(() => {
     if (!mapContainerRef.current || !window.L) return;
@@ -63,10 +76,22 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
         iconAnchor: [10, 10]
       });
       userMarkerRef.current = window.L.marker([userLocation.latitude, userLocation.longitude], { icon: userIcon }).addTo(mapRef.current);
+      lastLocationRef.current = { lat: userLocation.latitude, lng: userLocation.longitude };
+      isFirstRenderRef.current = false;
     } else {
-      // Only UPDATE user marker position, don't fly automatically
+      // Update user marker position
       if (userMarkerRef.current) {
         userMarkerRef.current.setLatLng([userLocation.latitude, userLocation.longitude]);
+
+        // FlyTo if location changed significantly (> 100m) - this handles GPS accuracy improvement
+        const lastLoc = lastLocationRef.current;
+        if (lastLoc) {
+          const distance = getDistance(lastLoc.lat, lastLoc.lng, userLocation.latitude, userLocation.longitude);
+          if (distance > 100) {
+            mapRef.current.flyTo([userLocation.latitude, userLocation.longitude], 15, { animate: true, duration: 1 });
+            lastLocationRef.current = { lat: userLocation.latitude, lng: userLocation.longitude };
+          }
+        }
       }
     }
 
