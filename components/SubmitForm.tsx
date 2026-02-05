@@ -69,12 +69,36 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
             lng = placeMatch[2];
         }
 
+        // Try !3d lat !4d lng format (from embed URLs)
+        const embedMatch = link.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+        if (embedMatch) {
+            lat = embedMatch[1];
+            lng = embedMatch[2];
+        }
+
+        // Try ll=lat,lng or center=lat,lng format
+        const llMatch = link.match(/(?:ll|center)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (llMatch) {
+            lat = llMatch[1];
+            lng = llMatch[2];
+        }
+
         setFormData(prev => ({
             ...prev,
             googleMapsLink: cleanMapsLink,
             latitude: lat || prev.latitude,
             longitude: lng || prev.longitude
         }));
+    };
+
+    // Check if it's a short link that needs resolving
+    const isShortLink = formData.googleMapsLink.includes('maps.app.goo.gl') ||
+        formData.googleMapsLink.includes('goo.gl/maps');
+
+    // Open link to get full URL
+    const openAndCopyInstructions = () => {
+        window.open(formData.googleMapsLink, '_blank');
+        alert('Setelah halaman terbuka:\n1. Copy URL panjang dari address bar\n2. Paste kembali di sini\n\nAtau:\n1. Klik kanan di peta → "What\'s here?"\n2. Copy koordinat yang muncul di bawah');
     };
 
     // Manual lat/lng input
@@ -175,7 +199,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                     </div>
 
                     {/* Google Maps Link with Auto-Parse */}
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <div className={`p-4 rounded-xl border ${isShortLink && !formData.latitude ? 'bg-yellow-50 border-yellow-300' : 'bg-blue-50 border-blue-100'}`}>
                         <label className="block text-sm font-bold text-blue-900 mb-1">Google Maps Link</label>
                         <input
                             type="url"
@@ -185,6 +209,21 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                             value={formData.googleMapsLink}
                             onChange={e => handleGmapsLinkChange(e.target.value)}
                         />
+
+                        {/* Short link warning */}
+                        {isShortLink && !formData.latitude && (
+                            <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-3 mb-3">
+                                <p className="text-sm text-yellow-800 font-medium mb-2">⚠️ Link pendek tidak mengandung koordinat!</p>
+                                <button
+                                    type="button"
+                                    onClick={openAndCopyInstructions}
+                                    className="w-full bg-yellow-500 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-yellow-600"
+                                >
+                                    Buka Link → Copy URL Panjang
+                                </button>
+                            </div>
+                        )}
+
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -201,7 +240,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                                 onChange={e => handleLngChange(e.target.value)}
                             />
                         </div>
-                        <p className="text-xs text-blue-600 mt-2">*Koordinat otomatis diambil dari link. Jika gagal, isi manual dari Google Maps.</p>
+                        <p className="text-xs text-blue-600 mt-2">*Koordinat otomatis diambil dari URL panjang. Short link perlu dibuka dulu.</p>
                     </div>
 
                     {/* Categories */}
