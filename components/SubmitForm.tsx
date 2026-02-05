@@ -41,37 +41,72 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
         });
     };
 
-    // Attempt to parse coordinates from Google Maps Link
+    // Attempt to parse coordinates and extract clean Maps link
     const handleGmapsLinkChange = (link: string) => {
-        setFormData(prev => ({ ...prev, googleMapsLink: link }));
+        let cleanMapsLink = link;
+        let lat = '';
+        let lng = '';
 
-        // Try to extract @lat,lng
-        const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-        const match = link.match(regex);
-        if (match) {
-            setFormData(prev => ({
-                ...prev,
-                latitude: match[1],
-                longitude: match[2],
-                googleMapsLink: link
-            }));
+        // If it's a YouTube redirect URL, extract the maps link from query param
+        if (link.includes('youtube.com/redirect')) {
+            const urlMatch = link.match(/[?&]q=([^&]+)/);
+            if (urlMatch) {
+                cleanMapsLink = decodeURIComponent(urlMatch[1]);
+            }
         }
+
+        // Try to extract @lat,lng from standard Google Maps URL
+        const atMatch = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (atMatch) {
+            lat = atMatch[1];
+            lng = atMatch[2];
+        }
+
+        // Try place/Name/@lat,lng format
+        const placeMatch = link.match(/place\/[^/]+\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (placeMatch) {
+            lat = placeMatch[1];
+            lng = placeMatch[2];
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            googleMapsLink: cleanMapsLink,
+            latitude: lat || prev.latitude,
+            longitude: lng || prev.longitude
+        }));
     };
 
+    // Manual lat/lng input
+    const handleLatChange = (val: string) => {
+        setFormData(prev => ({ ...prev, latitude: val }));
+    };
+    const handleLngChange = (val: string) => {
+        setFormData(prev => ({ ...prev, longitude: val }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate lat/lng
+        const lat = parseFloat(formData.latitude);
+        const lng = parseFloat(formData.longitude);
+        if (!lat || !lng || lat === 0 || lng === 0) {
+            alert('Koordinat (Lat/Lng) harus diisi! Masukkan manual jika auto-extract gagal.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         const success = await spotService.create({
             name: formData.name,
             googleMapsUri: formData.googleMapsLink,
-            latitude: parseFloat(formData.latitude) || 0,
-            longitude: parseFloat(formData.longitude) || 0,
+            latitude: lat,
+            longitude: lng,
             categories: formData.categories,
             tags: formData.tags,
             youtubeLink: formData.youtubeLink,
-            verdict: "Internal Submission", // or derive from tags if needed, though schema has specific verdict column
+            verdict: "User Submission",
         });
 
         if (success) {
@@ -153,20 +188,20 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                         <div className="flex gap-2">
                             <input
                                 type="text"
-                                placeholder="Lat"
-                                className="w-1/2 px-3 py-1 text-sm bg-white border border-gray-200 rounded text-gray-500"
+                                placeholder="Latitude (cth: -6.2345)"
+                                className={`w-1/2 px-3 py-2 text-sm bg-white border rounded ${formData.latitude ? 'border-green-400 text-gray-800' : 'border-red-300 text-gray-500'}`}
                                 value={formData.latitude}
-                                readOnly
+                                onChange={e => handleLatChange(e.target.value)}
                             />
                             <input
                                 type="text"
-                                placeholder="Lng"
-                                className="w-1/2 px-3 py-1 text-sm bg-white border border-gray-200 rounded text-gray-500"
+                                placeholder="Longitude (cth: 106.8456)"
+                                className={`w-1/2 px-3 py-2 text-sm bg-white border rounded ${formData.longitude ? 'border-green-400 text-gray-800' : 'border-red-300 text-gray-500'}`}
                                 value={formData.longitude}
-                                readOnly
+                                onChange={e => handleLngChange(e.target.value)}
                             />
                         </div>
-                        <p className="text-xs text-blue-600 mt-1">*Tempel link, koordinat akan diambil otomatis.</p>
+                        <p className="text-xs text-blue-600 mt-2">*Koordinat otomatis diambil dari link. Jika gagal, isi manual dari Google Maps.</p>
                     </div>
 
                     {/* Categories */}
