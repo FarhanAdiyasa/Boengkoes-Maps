@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+    --color-brand-red: #D92D20;
+    --color-brand-orange: #F79009;
+    --color-brand-yellow: #FEC84B;
+    --color-brand-dark: #1F2937;
+}
+
+/* Hide scrollbar for clean horizontal scrolling */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Map container fix */
+.leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 0;
+}

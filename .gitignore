@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Environment variables (SECRETS!)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Development scripts & data files
+scripts/
+db/
+data/
+
+# Test files
+test_*.py
+test_*.txt
+test_*.html
+
+# XML feeds (scraped data)
+*.xml
+
+# IDE & OS
+.DS_Store
+.vscode/
+*.log
+
+# Cache
+.cache/
+*.tsbuildinfo
