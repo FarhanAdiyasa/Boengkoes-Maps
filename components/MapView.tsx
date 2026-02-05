@@ -64,13 +64,9 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
       });
       userMarkerRef.current = window.L.marker([userLocation.latitude, userLocation.longitude], { icon: userIcon }).addTo(mapRef.current);
     } else {
-      // UPDATE user marker position AND fly to new location
+      // Only UPDATE user marker position, don't fly automatically
       if (userMarkerRef.current) {
         userMarkerRef.current.setLatLng([userLocation.latitude, userLocation.longitude]);
-        mapRef.current.flyTo([userLocation.latitude, userLocation.longitude], 15, {
-          animate: true,
-          duration: 1
-        });
       }
     }
 
