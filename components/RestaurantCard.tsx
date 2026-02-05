@@ -43,7 +43,7 @@ const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          {data.distance ? `${data.distance} away` : 'Nearby'}
+          {data.distance ? `${data.distance} dari sini` : 'Di sekitar'}
         </p>
 
         {/* Boengkoes Review Section */}
@@ -51,16 +51,16 @@ const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
           <div className="bg-orange-50 p-3 rounded-lg mb-4 border border-orange-100">
             <div className="flex items-center mb-1">
               <div className="w-6 h-6 rounded-full bg-brand-red mr-2 flex items-center justify-center text-white text-xs font-bold">B</div>
-              <span className="text-xs font-semibold text-brand-red">Boengkoes Says:</span>
+              <span className="text-xs font-semibold text-brand-red">Kata Boengkoes:</span>
             </div>
             <p className="text-sm text-gray-700 italic">
               {data.boengkoesReview.summary.includes("Terimakasi Gaes")
-                ? "\"Sorry, we haven't added the quote yet.\""
+                ? "\"Maaf, kutipan belum tersedia.\""
                 : `"${data.boengkoesReview.summary}"`}
             </p>
             <a href={data.boengkoesReview.youtubeTimestamp} target="_blank" rel="noreferrer" className="text-xs text-brand-orange font-medium mt-2 flex items-center hover:underline">
               <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" /></svg>
-              Watch Review
+              Tonton Review
             </a>
           </div>
         )}
@@ -73,7 +73,7 @@ const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
             rel="noreferrer"
             className="flex items-center justify-center py-2 px-4 border border-brand-orange text-brand-orange rounded-lg font-medium text-sm hover:bg-orange-50 transition-colors"
           >
-            Navigate
+            Navigasi
           </a>
         </div>
       </div>

@@ -80,7 +80,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                 onClose();
             }, 1000);
         } else {
-            alert("Failed to save. Check console.");
+            alert("Gagal menyimpan. Cek console.");
         }
 
         setIsSubmitting(false);
@@ -92,8 +92,8 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                     <span className="text-3xl">💾</span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Data Saved!</h2>
-                <p className="text-gray-500">New spot added to Boengkoes Database.</p>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Data Tersimpan!</h2>
+                <p className="text-gray-500">Spot baru berhasil ditambahkan.</p>
             </div>
         );
     }
@@ -103,7 +103,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-10 shadow-sm">
                 <h2 className="font-bold text-lg text-gray-800 flex items-center">
                     <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded mr-2 uppercase tracking-wide">Internal</span>
-                    Add New Spot
+                    Tambah Spot Baru
                 </h2>
                 <button onClick={onClose} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -115,7 +115,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
 
                     {/* YouTube Link - Priority */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">YouTube Link / Timestamp</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Link YouTube / Timestamp</label>
                         <input
                             type="url"
                             required
@@ -133,7 +133,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                             type="text"
                             required
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-orange outline-none"
-                            placeholder="e.g. Nasi Goreng Gila"
+                            placeholder="cth: Nasi Goreng Gila"
                             value={formData.name}
                             onChange={e => setFormData({ ...formData, name: e.target.value })}
                         />
@@ -146,7 +146,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                             type="url"
                             required
                             className="w-full px-4 py-2 rounded-lg border border-blue-200 focus:ring-2 focus:ring-blue-400 outline-none mb-2"
-                            placeholder="Paste full map link here..."
+                            placeholder="Tempel link map di sini..."
                             value={formData.googleMapsLink}
                             onChange={e => handleGmapsLinkChange(e.target.value)}
                         />
@@ -166,7 +166,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                                 readOnly
                             />
                         </div>
-                        <p className="text-xs text-blue-600 mt-1">*Paste link, we'll try to grab coords automatically.</p>
+                        <p className="text-xs text-blue-600 mt-1">*Tempel link, koordinat akan diambil otomatis.</p>
                     </div>
 
                     {/* Categories */}
@@ -191,7 +191,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
 
                     {/* Restricted Tags */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Verdict (Internal Tags)</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Verdict (Tag Internal)</label>
                         <div className="flex flex-wrap gap-2">
                             {availableTags.map(tag => (
                                 <button
@@ -218,7 +218,7 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                                 : 'bg-gray-900 hover:bg-black hover:scale-[1.02]'
                                 }`}
                         >
-                            {isSubmitting ? 'Saving...' : 'Save to Database 💾'}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan ke Database 💾'}
                         </button>
                     </div>
                 </form>

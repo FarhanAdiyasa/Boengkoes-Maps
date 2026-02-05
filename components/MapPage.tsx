@@ -87,7 +87,7 @@ const MapPage: React.FC = () => {
                 {loading && !location ? (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-50">
                         <div className="w-12 h-12 border-4 border-brand-orange border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-gray-500 text-sm animate-pulse">Locating closest eats...</p>
+                        <p className="text-gray-500 text-sm animate-pulse">Mencari tempat makan terdekat...</p>
                     </div>
                 ) : location ? (
                     <div className="absolute inset-0 z-0">
@@ -102,7 +102,7 @@ const MapPage: React.FC = () => {
                 ) : (
                     <div className="absolute inset-0 z-50 flex items-center justify-center p-4">
                         <div className="bg-red-50 text-red-700 p-4 rounded-xl text-center max-w-xs">
-                            <p>{error || "Waiting for location..."}</p>
+                            <p>{error || "Menunggu lokasi..."}</p>
                         </div>
                     </div>
                 )}
@@ -112,7 +112,7 @@ const MapPage: React.FC = () => {
                     <button
                         onClick={() => setRecenterTrigger(prev => prev + 1)}
                         className="absolute bottom-6 right-6 z-40 bg-white p-3 rounded-full text-brand-orange shadow-lg hover:bg-gray-50 transition-transform active:scale-95 flex items-center justify-center"
-                        title="Recenter"
+                        title="Kembali ke Lokasi Saya"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
