@@ -121,12 +121,16 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
       }
 
       const pinHtml = `
-        <div class="relative group transition-all duration-300 ${isSelected ? 'scale-125 z-50' : 'scale-100'}">
-            <div class="w-8 h-8 rounded-full ${color} flex items-center justify-center text-white shadow-lg border-2 border-white transform transition-transform">
+        <div class="relative group transition-all duration-300 ${isSelected ? 'scale-125 z-50' : 'scale-100'}" style="width: 80px; margin-left: -24px;">
+            <div class="w-8 h-8 rounded-full ${color} flex items-center justify-center text-white shadow-lg border-2 border-white transform transition-transform mx-auto">
                ${isSelected ? '★' : iconChar}
             </div>
-            ${isLWK ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border border-white"></div>' : ''}
-            ${isSelected ? '' : `<div class="w-2 h-2 bg-black/20 rounded-full mx-auto mt-1 blur-[1px]"></div>`}
+            ${isLWK ? '<div class="absolute top-0 right-5 w-3 h-3 bg-yellow-400 rounded-full border border-white"></div>' : ''}
+            <div class="text-center mt-1">
+              <span class="text-xs font-semibold text-gray-800 bg-white/90 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap" style="font-size: 10px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
+                ${restaurant.name.length > 12 ? restaurant.name.substring(0, 12) + '...' : restaurant.name}
+              </span>
+            </div>
         </div>
       `;
 

@@ -90,24 +90,6 @@ const MapPage: React.FC = () => {
 
     return (
         <div className="h-screen w-screen bg-gray-50 font-sans flex flex-col overflow-hidden relative">
-            {/* Header with Search */}
-            <header className="absolute top-0 left-0 right-0 z-50 pointer-events-none flex flex-col items-center pt-2 gap-2">
-                <div className="w-full max-w-md px-4 pointer-events-auto">
-                    <form onSubmit={handleSearchSubmit} className="relative shadow-lg rounded-full">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-400">🔍</span>
-                        </div>
-                        <input
-                            type="text"
-                            className="block w-full pl-10 pr-3 py-3 rounded-full border-none focus:ring-2 focus:ring-brand-orange bg-white/95 backdrop-blur-sm text-sm"
-                            placeholder="Cari 'Nasi Goreng' atau 'Jaksel'..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </form>
-                </div>
-            </header>
-
             <main className="flex-1 relative">
                 {loading && !location ? (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-50">
