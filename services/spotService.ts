@@ -52,6 +52,25 @@ export const spotService = {
             return true;
         }
 
+        // Extract YouTube thumbnail from link
+        const extractYouTubeThumbnail = (url: string): string | null => {
+            // Handle youtu.be/VIDEO_ID format
+            const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+            if (shortMatch) return `https://img.youtube.com/vi/${shortMatch[1]}/maxresdefault.jpg`;
+
+            // Handle youtube.com/watch?v=VIDEO_ID format
+            const longMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+            if (longMatch) return `https://img.youtube.com/vi/${longMatch[1]}/maxresdefault.jpg`;
+
+            // Handle youtube.com/embed/VIDEO_ID format
+            const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/);
+            if (embedMatch) return `https://img.youtube.com/vi/${embedMatch[1]}/maxresdefault.jpg`;
+
+            return null;
+        };
+
+        const thumbnail = extractYouTubeThumbnail(spot.youtubeLink);
+
         const { error } = await supabase
             .from('spots')
             .insert({
@@ -64,7 +83,8 @@ export const spotService = {
                 tags: spot.tags,
                 youtube_link: spot.youtubeLink,
                 verdict: spot.verdict,
-                description: "User Submitted - Pending Review", // Default placeholder
+                thumbnail: thumbnail,
+                description: "User Submitted - Pending Review",
                 rating: 0,
                 user_rating_count: 0
             });
