@@ -1,6 +1,6 @@
 {
-  "name": "Boengkoes Eats",
-  "description": "Curated culinary recommendations based on Boengkoes Network reviews. Find trusted spots, check reviews, and eat like a legend.",
+  "name": "Ikutin Boengkoes",
+  "description": "Ikutin jejak kuliner Boengkoes Network! Temukan tempat makan yang sudah di-review, cek review-nya, dan makan seperti legend.",
   "requestFramePermissions": [
     "geolocation"
   ]
