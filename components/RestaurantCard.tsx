@@ -8,6 +8,14 @@ interface Props {
 }
 
 const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
+  // Use state for image source to handle fallbacks reliably
+  const [imgSrc, setImgSrc] = React.useState(data.thumbnail || `https://picsum.photos/seed/${data.id}/600/300`);
+
+  // Update image source if data changes
+  React.useEffect(() => {
+    setImgSrc(data.thumbnail || `https://picsum.photos/seed/${data.id}/600/300`);
+  }, [data.thumbnail, data.id]);
+
   // Determine verdict color
   const getVerdictStyle = (verdict: string) => {
     if (verdict.includes("Ngaco")) return "bg-red-600 text-white";
@@ -20,16 +28,18 @@ const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
       <div className="relative h-48 bg-gray-200">
         {/* Restaurant Image - Use YouTube thumbnail with fallback to lower quality */}
         <img
-          src={data.thumbnail || `https://picsum.photos/seed/${data.id}/600/300`}
+          src={imgSrc}
           alt={data.name}
           className="w-full h-full object-cover"
-          onError={(e) => {
-            // Fallback to hqdefault if maxresdefault fails
-            const target = e.target as HTMLImageElement;
-            if (target.src.includes('maxresdefault')) {
-              target.src = target.src.replace('maxresdefault', 'hqdefault');
-            } else {
-              target.src = `https://picsum.photos/seed/${data.id}/600/300`;
+          onError={() => {
+            // Fallback strategy:
+            // 1. maxresdefault -> hqdefault
+            // 2. hqdefault -> picsum
+            // 3. picsum -> broken (default browser behavior)
+            if (imgSrc && imgSrc.includes('maxresdefault')) {
+              setImgSrc(imgSrc.replace('maxresdefault', 'hqdefault'));
+            } else if (!imgSrc || !imgSrc.includes('picsum')) {
+              setImgSrc(`https://picsum.photos/seed/${data.id}/600/300`);
             }
           }}
         />
