@@ -18,44 +18,42 @@ const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4 border border-gray-100 transform transition-all hover:scale-[1.02]">
       <div className="relative h-48 bg-gray-200">
-        {/* Restaurant Image - Use YouTube thumbnail or fallback */}
+        {/* Restaurant Image - Use YouTube thumbnail with fallback to lower quality */}
         <img
           src={data.thumbnail || `https://picsum.photos/seed/${data.id}/600/300`}
           alt={data.name}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            // Fallback to hqdefault if maxresdefault fails
+            const target = e.target as HTMLImageElement;
+            if (target.src.includes('maxresdefault')) {
+              target.src = target.src.replace('maxresdefault', 'hqdefault');
+            } else {
+              target.src = `https://picsum.photos/seed/${data.id}/600/300`;
+            }
+          }}
         />
-        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center shadow-sm">
-          <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-          <span className="text-sm font-bold text-gray-800">{data.rating.toFixed(1)}</span>
-          <span className="text-xs text-gray-500 ml-1">({data.userRatingCount})</span>
-        </div>
+        {/* Only show rating if > 0 */}
+        {data.rating > 0 && (
+          <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md flex items-center shadow-sm">
+            <svg className="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span className="text-sm font-bold text-gray-800">{data.rating.toFixed(1)}</span>
+            <span className="text-xs text-gray-500 ml-1">({data.userRatingCount})</span>
+          </div>
+        )}
       </div>
 
       <div className="p-4">
         <h3 className="text-xl font-bold text-gray-900 leading-tight mb-3">{data.name}</h3>
 
-        {/* Boengkoes Review Section */}
-        {data.boengkoesReview && (
-          <div className="bg-orange-50 p-3 rounded-lg mb-4 border border-orange-100">
-            <div className="flex items-center mb-1">
-              <div className="w-6 h-6 rounded-full bg-brand-red mr-2 flex items-center justify-center text-white text-xs font-bold">B</div>
-              <span className="text-xs font-semibold text-brand-red">Kata Boengkoes:</span>
-            </div>
-            <p className="text-sm text-gray-700 italic">
-              {data.boengkoesReview.summary.includes("Terimakasi Gaes")
-                ? "\"Maaf, kutipan belum tersedia.\""
-                : `"${data.boengkoesReview.summary}"`}
-            </p>
-          </div>
-        )}
-
         {/* Action Buttons - Side by Side */}
         <div className="flex gap-3">
-          {data.boengkoesReview?.youtubeTimestamp && (
+          {/* Tonton button - use youtubeLink or boengkoesReview timestamp */}
+          {(data.youtubeLink || data.boengkoesReview?.youtubeTimestamp) && (
             <a
-              href={data.boengkoesReview.youtubeTimestamp}
+              href={data.youtubeLink || data.boengkoesReview?.youtubeTimestamp || '#'}
               target="_blank"
               rel="noreferrer"
               className="flex-1 flex items-center justify-center py-2.5 px-4 bg-brand-red text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors"

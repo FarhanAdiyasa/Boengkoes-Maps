@@ -4,25 +4,30 @@ import { Restaurant } from '../types';
 import { BOENGKOES_SPOTS } from '../data/spots';
 
 // Map DB snake_case columns to our CamelCase Types
-const mapDbToRestaurant = (row: any): Restaurant => ({
-    id: row.id,
-    name: row.name,
-    address: row.address,
-    rating: row.rating,
-    userRatingCount: row.user_rating_count,
-    googleMapsUri: row.google_maps_uri,
-    latitude: row.latitude,
-    longitude: row.longitude,
-    categories: row.categories || [],
-    tags: row.tags || [],
-    thumbnail: row.thumbnail || '',
-    // Construct the review object
-    boengkoesReview: {
-        verdict: row.verdict || 'B Aja',
-        summary: row.description || '',
-        youtubeTimestamp: row.youtube_link || ''
-    }
-});
+const mapDbToRestaurant = (row: any): Restaurant => {
+    const isUserSubmitted = row.description?.includes('User Submitted');
+
+    return {
+        id: row.id,
+        name: row.name,
+        address: row.address,
+        rating: parseFloat(row.rating) || 0,
+        userRatingCount: row.user_rating_count || 0,
+        googleMapsUri: row.google_maps_uri,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        categories: row.categories || [],
+        tags: row.tags || [],
+        thumbnail: row.thumbnail || '',
+        youtubeLink: row.youtube_link || '',
+        // Only include boengkoesReview for non-user-submitted items
+        boengkoesReview: isUserSubmitted ? undefined : {
+            verdict: row.verdict || 'B Aja',
+            summary: row.description || '',
+            youtubeTimestamp: row.youtube_link || ''
+        }
+    };
+};
 
 export const spotService = {
     async getAll(): Promise<Restaurant[]> {

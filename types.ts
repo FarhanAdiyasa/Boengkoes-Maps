@@ -19,6 +19,7 @@ export interface Restaurant {
   googleMapsUri: string;
   photoUri?: string;
   thumbnail?: string; // YouTube thumbnail URL
+  youtubeLink?: string; // YouTube video link
   distance?: string;
   latitude: number;
   longitude: number;
