@@ -102,19 +102,8 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
     // Add Restaurant Markers
     restaurants.forEach(restaurant => {
       const isSelected = restaurant.id === selectedId;
-      const isLWK = restaurant.tags?.includes('LWK');
-      const isAncyurr = restaurant.tags?.includes('Ancyurr');
 
       let color = 'bg-brand-orange';
-      let iconChar = '🍔';
-
-      if (isLWK) {
-        color = 'bg-red-600';
-        iconChar = '🔥';
-      } else if (isAncyurr) {
-        color = 'bg-purple-700';
-        iconChar = '💀';
-      }
 
       if (isSelected) {
         color = 'bg-black ring-4 ring-brand-orange';
@@ -123,9 +112,8 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
       const pinHtml = `
         <div class="relative group transition-all duration-300 ${isSelected ? 'scale-125 z-50' : 'scale-100'}" style="width: 80px; margin-left: -24px;">
             <div class="w-8 h-8 rounded-full ${color} flex items-center justify-center text-white shadow-lg border-2 border-white transform transition-transform mx-auto">
-               ${isSelected ? '★' : iconChar}
+               ${isSelected ? '★' : '🍔'}
             </div>
-            ${isLWK ? '<div class="absolute top-0 right-5 w-3 h-3 bg-yellow-400 rounded-full border border-white"></div>' : ''}
             <div class="text-center mt-1">
               <span class="text-xs font-semibold text-gray-800 bg-white/90 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap" style="font-size: 10px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; display: inline-block;">
                 ${restaurant.name.length > 12 ? restaurant.name.substring(0, 12) + '...' : restaurant.name}

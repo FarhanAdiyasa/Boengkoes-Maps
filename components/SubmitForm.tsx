@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { spotService } from '../services/spotService';
+import { youtubeService } from '../services/youtubeService';
 
 interface Props {
     onClose: () => void;
@@ -11,26 +12,19 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
         name: '',
         googleMapsLink: '',
         categories: [] as string[],
-        tags: [] as string[],
         latitude: '',
         longitude: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [isFetchingYoutube, setIsFetchingYoutube] = useState(false);
+    const [youtubePreview, setYoutubePreview] = useState<{title: string, thumbnail: string} | null>(null);
+    const [isResolvingMaps, setIsResolvingMaps] = useState(false);
+    const [mapsError, setMapsError] = useState<string | null>(null);
 
-    // Restricted Tags for Internal Tool
-    const availableTags = ["LWK", "Ancyurr"];
-    const availableCategories = ["Makanan Berat", "Ringan", "Minuman"];
-
-    const handleTagToggle = (tag: string) => {
-        setFormData(prev => {
-            if (prev.tags.includes(tag)) {
-                return { ...prev, tags: prev.tags.filter(t => t !== tag) };
-            }
-            return { ...prev, tags: [...prev.tags, tag] };
-        });
-    };
+    // Simplified 3-Category System
+    const availableCategories = ["Jajanan", "Makanan Berat", "Minuman/Dessert"];
 
     const handleCategoryToggle = (cat: string) => {
         setFormData(prev => {
@@ -42,10 +36,11 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
     };
 
     // Attempt to parse coordinates and extract clean Maps link
-    const handleGmapsLinkChange = (link: string) => {
+    const handleGmapsLinkChange = async (link: string) => {
         let cleanMapsLink = link;
         let lat = '';
         let lng = '';
+        setMapsError(null);
 
         // If it's a YouTube redirect URL, extract the maps link from query param
         if (link.includes('youtube.com/redirect')) {
@@ -83,6 +78,38 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
             lng = llMatch[2];
         }
 
+        // If it's a short link and we don't have coordinates, try to resolve via backend
+        const isShort = link.includes('maps.app.goo.gl') || link.includes('goo.gl/maps');
+        if (isShort && !lat && !lng) {
+            setIsResolvingMaps(true);
+            try {
+                const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/resolve-maps-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({ shortUrl: link })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    lat = data.latitude.toString();
+                    lng = data.longitude.toString();
+                    // Replace short link with full URL
+                    cleanMapsLink = data.fullUrl || link;
+                } else {
+                    setMapsError('Gagal auto-extract koordinat. Silakan isi manual.');
+                }
+            } catch (error) {
+                console.error('Error resolving maps link:', error);
+                setMapsError('Gagal terhubung ke server. Silakan isi koordinat manual.');
+            }
+            setIsResolvingMaps(false);
+        }
+
         setFormData(prev => ({
             ...prev,
             googleMapsLink: cleanMapsLink,
@@ -91,14 +118,39 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
         }));
     };
 
+    // Auto-fetch YouTube video info when link changes
+    const handleYoutubeLinkChange = async (url: string) => {
+        setFormData(prev => ({ ...prev, youtubeLink: url }));
+        setYoutubePreview(null);
+        
+        if (!url) return;
+        
+        const videoId = youtubeService.extractVideoId(url);
+        if (videoId) {
+            setIsFetchingYoutube(true);
+            const info = await youtubeService.fetchVideoInfo(videoId);
+            if (info) {
+                setYoutubePreview({
+                    title: info.title,
+                    thumbnail: info.thumbnail
+                });
+                // Optionally auto-fill name from title
+                if (!formData.name) {
+                    setFormData(prev => ({ ...prev, name: info.title }));
+                }
+            }
+            setIsFetchingYoutube(false);
+        }
+    };
+
     // Check if it's a short link that needs resolving
     const isShortLink = formData.googleMapsLink.includes('maps.app.goo.gl') ||
         formData.googleMapsLink.includes('goo.gl/maps');
 
-    // Open link to get full URL
+    // Open link to get coordinates
     const openAndCopyInstructions = () => {
         window.open(formData.googleMapsLink, '_blank');
-        alert('Setelah halaman terbuka:\n1. Copy URL panjang dari address bar\n2. Paste kembali di sini\n\nAtau:\n1. Klik kanan di peta → "What\'s here?"\n2. Copy koordinat yang muncul di bawah');
+        alert('📍 Cara mendapatkan koordinat:\n\n1. Tunggu Google Maps terbuka\n2. Klik kanan di lokasi restoran\n3. Pilih "What\'s here?" atau "Apa ini?"\n4. Lihat angka di bawah (contoh: -6.2345, 106.8456)\n5. Copy angka pertama ke kolom LATITUDE\n6. Copy angka kedua ke kolom LONGITUDE\n\nAtau bisa juga copy dari URL address bar setelah @\n(contoh: google.com/maps/.../@-6.2345,106.8456)');
     };
 
     // Manual lat/lng input
@@ -122,24 +174,22 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
 
         setIsSubmitting(true);
 
-        const success = await spotService.create({
+        const result = await spotService.create({
             name: formData.name,
             googleMapsUri: formData.googleMapsLink,
             latitude: lat,
             longitude: lng,
             categories: formData.categories,
-            tags: formData.tags,
             youtubeLink: formData.youtubeLink,
-            verdict: "User Submission",
         });
 
-        if (success) {
+        if (result.success) {
             setSuccess(true);
             setTimeout(() => {
                 onClose();
             }, 1000);
         } else {
-            alert("Gagal menyimpan. Cek console.");
+            alert(result.error || "Gagal menyimpan. Cek console.");
         }
 
         setIsSubmitting(false);
@@ -174,15 +224,44 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
 
                     {/* YouTube Link - Priority */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Link YouTube / Timestamp</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Link YouTube (Short/Long/Shorts OK)</label>
                         <input
                             type="url"
                             required
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none"
-                            placeholder="https://youtu.be/..."
+                            placeholder="https://youtu.be/... atau https://youtube.com/shorts/..."
                             value={formData.youtubeLink}
-                            onChange={e => setFormData({ ...formData, youtubeLink: e.target.value })}
+                            onChange={e => handleYoutubeLinkChange(e.target.value)}
                         />
+                        
+                        {/* YouTube Preview */}
+                        {isFetchingYoutube && (
+                            <div className="mt-2 text-sm text-gray-500 flex items-center">
+                                <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                </svg>
+                                Mengambil info video...
+                            </div>
+                        )}
+                        
+                        {youtubePreview && (
+                            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex gap-3">
+                                    <img 
+                                        src={youtubePreview.thumbnail} 
+                                        alt="Thumbnail"
+                                        className="w-24 h-16 object-cover rounded"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-800 line-clamp-2">
+                                            {youtubePreview.title}
+                                        </p>
+                                        <p className="text-xs text-green-600 mt-1">✓ Video ditemukan</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Place Name */}
@@ -205,21 +284,47 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                             type="url"
                             required
                             className="w-full px-4 py-2 rounded-lg border border-blue-200 focus:ring-2 focus:ring-blue-400 outline-none mb-2"
-                            placeholder="Tempel link map di sini..."
+                            placeholder="https://maps.app.goo.gl/... (auto-detect koordinat)"
                             value={formData.googleMapsLink}
                             onChange={e => handleGmapsLinkChange(e.target.value)}
                         />
 
-                        {/* Short link warning */}
-                        {isShortLink && !formData.latitude && (
-                            <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-3 mb-3">
-                                <p className="text-sm text-yellow-800 font-medium mb-2">⚠️ Link pendek tidak mengandung koordinat!</p>
+                        {/* Loading indicator */}
+                        {isResolvingMaps && (
+                            <div className="bg-blue-100 border border-blue-400 rounded-lg p-3 mb-3">
+                                <div className="flex items-center text-sm text-blue-800">
+                                    <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                                    </svg>
+                                    Mencari koordinat dari Maps link...
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Success indicator */}
+                        {formData.latitude && formData.longitude && (
+                            <div className="bg-green-100 border border-green-400 rounded-lg p-3 mb-3">
+                                <p className="text-sm text-green-800 font-medium">
+                                    ✅ Koordinat ditemukan!<br/>
+                                    <span className="text-xs">Lat: {formData.latitude}, Lng: {formData.longitude}</span>
+                                    {isShortLink && (
+                                        <><br/><span className="text-xs text-green-700">Link Maps diperbarui ke URL lengkap</span></>
+                                    )}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Error indicator */}
+                        {mapsError && (
+                            <div className="bg-red-100 border border-red-400 rounded-lg p-3 mb-3">
+                                <p className="text-sm text-red-800 font-medium">{mapsError}</p>
                                 <button
                                     type="button"
                                     onClick={openAndCopyInstructions}
-                                    className="w-full bg-yellow-500 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-yellow-600"
+                                    className="mt-2 w-full bg-red-500 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-red-600"
                                 >
-                                    Buka Link → Copy URL Panjang
+                                    Buka Google Maps Manual 🗺️
                                 </button>
                             </div>
                         )}
@@ -240,20 +345,25 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                                 onChange={e => handleLngChange(e.target.value)}
                             />
                         </div>
-                        <p className="text-xs text-blue-600 mt-2">*Koordinat otomatis diambil dari URL panjang. Short link perlu dibuka dulu.</p>
+                        <p className="text-xs text-blue-600 mt-2">
+                            *Short link (maps.app.goo.gl) auto-resolve koordinat via backend<br/>
+                            *Kalau gagal auto-resolve, bisa isi manual atau klik "Buka Google Maps Manual"
+                        </p>
                     </div>
 
-                    {/* Categories */}
+                    {/* Categories - Simple 3 Options */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Kategori (Boleh lebih dari 1)</label>
-                        <div className="flex flex-wrap gap-2">
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                            Kategori <span className="text-red-500">*</span>
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
                             {availableCategories.map(cat => (
                                 <button
                                     key={cat}
                                     type="button"
-                                    onClick={() => handleCategoryToggle(cat)}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all border shadow-sm ${formData.categories.includes(cat)
-                                        ? 'bg-brand-orange text-white border-brand-orange ring-2 ring-orange-200 scale-105'
+                                    onClick={() => setFormData(prev => ({ ...prev, categories: [cat] }))}
+                                    className={`px-3 py-3 rounded-lg text-sm font-bold transition-all border shadow-sm ${formData.categories.includes(cat)
+                                        ? 'bg-brand-orange text-white border-brand-orange ring-2 ring-orange-200'
                                         : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
@@ -261,27 +371,10 @@ const SubmitForm: React.FC<Props> = ({ onClose }) => {
                                 </button>
                             ))}
                         </div>
+                        <p className="text-xs text-gray-500 mt-1">Pilih salah satu. Auto-terisi dari YouTube tags.</p>
                     </div>
 
-                    {/* Restricted Tags */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Verdict (Tag Internal)</label>
-                        <div className="flex flex-wrap gap-2">
-                            {availableTags.map(tag => (
-                                <button
-                                    key={tag}
-                                    type="button"
-                                    onClick={() => handleTagToggle(tag)}
-                                    className={`px-4 py-2 rounded-full text-sm font-bold transition-all border shadow-sm ${formData.tags.includes(tag)
-                                        ? 'bg-brand-red text-white border-brand-red ring-2 ring-red-200 scale-105'
-                                        : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
-                                        }`}
-                                >
-                                    {tag}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
 
                     <div className="pt-6">
                         <button
