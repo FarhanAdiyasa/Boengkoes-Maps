@@ -83,15 +83,8 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
       if (userMarkerRef.current) {
         userMarkerRef.current.setLatLng([userLocation.latitude, userLocation.longitude]);
 
-        // FlyTo if location changed significantly (> 100m) - this handles GPS accuracy improvement
-        const lastLoc = lastLocationRef.current;
-        if (lastLoc) {
-          const distance = getDistance(lastLoc.lat, lastLoc.lng, userLocation.latitude, userLocation.longitude);
-          if (distance > 100) {
-            mapRef.current.flyTo([userLocation.latitude, userLocation.longitude], 15, { animate: true, duration: 1 });
-            lastLocationRef.current = { lat: userLocation.latitude, lng: userLocation.longitude };
-          }
-        }
+        // Only update reference, DO NOT flyTo automatically anymore.
+        lastLocationRef.current = { lat: userLocation.latitude, lng: userLocation.longitude };
       }
     }
 
