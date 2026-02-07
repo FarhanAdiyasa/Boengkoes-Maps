@@ -89,8 +89,8 @@ const MapPage: React.FC = () => {
     };
 
     return (
-        <div className="h-screen w-screen bg-gray-50 font-sans flex flex-col overflow-hidden relative">
-            <main className="flex-1 relative">
+        <div className="fixed inset-0 bg-gray-50 font-sans flex flex-col overflow-hidden">
+            <main className="flex-1 relative w-full h-full">
                 {loading && !location ? (
                     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-50">
                         <div className="w-12 h-12 border-4 border-brand-orange border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -114,11 +114,13 @@ const MapPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Recenter Button */}
+                {/* Recenter Button - Moved up for mobile + specific Z-Index */}
                 {location && (
                     <button
                         onClick={() => setRecenterTrigger(prev => prev + 1)}
-                        className="absolute bottom-6 right-6 z-40 bg-white p-3 rounded-full text-brand-orange shadow-lg hover:bg-gray-50 transition-transform active:scale-95 flex items-center justify-center"
+                        className={`absolute right-6 z-50 bg-white p-3 rounded-full text-brand-orange shadow-lg hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center border border-gray-100 ${selectedRestaurant ? 'bottom-80' : 'bottom-32'
+                            }`}
+                        style={{ transition: 'bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}
                         title="Kembali ke Lokasi Saya"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

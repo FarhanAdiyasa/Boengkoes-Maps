@@ -1,3 +1,8 @@
+export interface Location {
+  latitude: number;
+  longitude: number;
+}
+
 export interface Restaurant {
   id: string;
   name: string;
