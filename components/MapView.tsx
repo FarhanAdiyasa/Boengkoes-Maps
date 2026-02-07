@@ -138,7 +138,7 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
 
   }, [userLocation, restaurants, selectedId, onSelectRestaurant]);
 
-  // Handle Recenter
+  // Handle Recenter - Only trigger when button is clicked (recenterTrigger changes), NOT when userLocation updates passively
   useEffect(() => {
     if (mapRef.current && userLocation && recenterTrigger > 0) {
       mapRef.current.flyTo([userLocation.latitude, userLocation.longitude], 15, {
@@ -146,7 +146,8 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
         duration: 1
       });
     }
-  }, [recenterTrigger, userLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterTrigger]);
 
   return (
     <div ref={mapContainerRef} className="w-full h-full bg-gray-100" />
