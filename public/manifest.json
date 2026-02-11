@@ -1,0 +1,17 @@
+{
+    "name": "Boengkoes Maps",
+    "short_name": "Boengkoes",
+    "description": "Katalog wisata kuliner terpercaya ala Boengkoes Network",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#FFFFFF",
+    "theme_color": "#D92D20",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/icon.svg",
+            "type": "image/svg+xml",
+            "sizes": "any"
+        }
+    ]
+}

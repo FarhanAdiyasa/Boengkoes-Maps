@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { Location, Restaurant } from '../types';
 
 interface Props {
@@ -9,19 +9,35 @@ interface Props {
   recenterTrigger: number;
 }
 
+export interface MapViewHandle {
+  panToLocation: (lat: number, lng: number) => void;
+}
+
 declare global {
   interface Window {
     L: any;
   }
 }
 
-const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestaurant, selectedId, recenterTrigger }) => {
+const MapView = forwardRef<MapViewHandle, Props>(({ userLocation, restaurants, onSelectRestaurant, selectedId, recenterTrigger }, ref) => {
   const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<{ [key: string]: any }>({});
   const userMarkerRef = useRef<any>(null);
   const lastLocationRef = useRef<{ lat: number; lng: number } | null>(null);
   const isFirstRenderRef = useRef<boolean>(true);
+
+  // Expose panToLocation function to parent
+  useImperativeHandle(ref, () => ({
+    panToLocation: (lat: number, lng: number) => {
+      if (mapRef.current) {
+        mapRef.current.flyTo([lat, lng], 15, {
+          animate: true,
+          duration: 1.5
+        });
+      }
+    }
+  }));
 
   // User icon style (defined once)
   const userIconHtml = `
@@ -152,6 +168,6 @@ const MapView: React.FC<Props> = ({ userLocation, restaurants, onSelectRestauran
   return (
     <div ref={mapContainerRef} className="w-full h-full bg-gray-100" />
   );
-};
+});
 
 export default MapView;
