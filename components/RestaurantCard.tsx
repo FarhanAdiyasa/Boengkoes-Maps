@@ -8,37 +8,60 @@ interface Props {
 }
 
 const RestaurantCard: React.FC<Props> = ({ data, onCheckIn, isCheckedIn }) => {
-  const getYouTubeThumbnail = (url: string | undefined) => {
+  const getYouTubeVideoId = (url: string | undefined) => {
     if (!url) return null;
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*\/v\/|.*\/embed\/))([^?&"'>]+)/);
-    const videoId = match ? match[1] : null;
-    return videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+    return match ? match[1] : null;
   };
 
-  const initialSrc = React.useMemo(() => {
-    // Priority 1: Always use hqdefault if we have a YouTube link (most reliable)
-    const ytThumb = getYouTubeThumbnail(data.youtubeLink);
-    if (ytThumb) return ytThumb;
+  const imageCandidates = React.useMemo(() => {
+    const candidates: string[] = [];
+    const videoId = getYouTubeVideoId(data.youtubeLink);
 
-    // Priority 2: Use provided thumbnail if it's not a YouTube link
-    if (data.thumbnail && !data.thumbnail.includes('youtube.com') && !data.thumbnail.includes('ytimg.com')) {
-      return data.thumbnail;
+    if (videoId) {
+      // Use multiple endpoints/hosts to reduce chance of CDN timeout.
+      candidates.push(`https://i.ytimg.com/vi_webp/${videoId}/hqdefault.webp`);
+      candidates.push(`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`);
+      candidates.push(`https://i3.ytimg.com/vi/${videoId}/hqdefault.jpg`);
+      candidates.push(`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`);
     }
 
-    // Priority 3: Fallback to picsum
-    return `https://picsum.photos/seed/${data.id}/600/300`;
+    // Keep user-provided non-YouTube thumbnail as additional fallback.
+    if (data.thumbnail && !data.thumbnail.includes('youtube.com') && !data.thumbnail.includes('ytimg.com')) {
+      candidates.push(data.thumbnail);
+    }
+
+    // Final local fallback (no network request required).
+    const fallbackSvg = encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">
+        <defs>
+          <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#f3f4f6"/>
+            <stop offset="100%" stop-color="#e5e7eb"/>
+          </linearGradient>
+        </defs>
+        <rect width="600" height="300" fill="url(#g)"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="22">Thumbnail video tidak tersedia</text>
+      </svg>`
+    );
+    candidates.push(`data:image/svg+xml;charset=UTF-8,${fallbackSvg}`);
+
+    return candidates;
   }, [data.thumbnail, data.youtubeLink, data.id]);
 
-  const [imgSrc, setImgSrc] = React.useState(initialSrc);
+  const [imgSrc, setImgSrc] = React.useState(imageCandidates[0]);
+  const [candidateIndex, setCandidateIndex] = React.useState(0);
 
   React.useEffect(() => {
-    setImgSrc(initialSrc);
-  }, [initialSrc]);
+    setCandidateIndex(0);
+    setImgSrc(imageCandidates[0]);
+  }, [imageCandidates]);
 
   const handleImageError = () => {
-    if (imgSrc.includes('ytimg.com')) {
-      // If hqdefault fails (rare), go to picsum
-      setImgSrc(`https://picsum.photos/seed/${data.id}/600/300`);
+    const nextIndex = candidateIndex + 1;
+    if (nextIndex < imageCandidates.length) {
+      setCandidateIndex(nextIndex);
+      setImgSrc(imageCandidates[nextIndex]);
     }
   };
 
