@@ -31,3 +31,5 @@ test_*.html
 # Cache
 .cache/
 *.tsbuildinfo
+
+.vercel
